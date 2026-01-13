@@ -11,17 +11,29 @@ jobs:
     name: Train and Save the model
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
-        python: [3.11, 3.12]
+        python: ["3.11", "3.12"]
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Setup python
-        uses: actions/setup-python@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+
+      - name: Debug repo files (confirm paths)
+        run: |
+          echo "PWD=$(pwd)"
+          ls -la
+          echo "---- git tracked files ----"
+          git ls-files
+          echo "---- find train.py ----"
+          find . -maxdepth 2 -type f -name "train.py" -print
+          echo "---- artifacts folder ----"
+          ls -la artifacts || true
 
       - name: Upgrade pip
         run: python -m pip install --upgrade pip setuptools wheel
@@ -32,11 +44,11 @@ jobs:
       - name: Train the model
         run: |
           mkdir -p artifacts
-          python train.py
+          python ./train.py
           ls -la artifacts
 
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
           name: ml-artifacts-${{ matrix.python }}-${{ github.run_id }}
-          path: artifacts
+          path: artifacts/
